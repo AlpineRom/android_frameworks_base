@@ -192,6 +192,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     int mIconHPadding = -1;
     Display mDisplay;
     Point mCurrentDisplaySize = new Point();
+    int mCurrUiThemeMode;
     private float mHeadsUpVerticalOffset;
     private int[] mPilePosition = new int[2];
 
@@ -464,6 +465,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mDisplay = ((WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE))
                 .getDefaultDisplay();
         updateDisplaySize();
+
+        mCurrUiThemeMode = mContext.getResources().getConfiguration().uiThemeMode;
 
         CustomTheme currentTheme = mContext.getResources().getConfiguration().customTheme;
         if (currentTheme != null) {
@@ -3119,23 +3122,29 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         final Context context = mContext;
         final Resources res = context.getResources();
 
+        // detect theme ui mode change
+        int uiThemeMode = res.getConfiguration().uiThemeMode;
+        if (uiThemeMode != mCurrUiThemeMode) {
+            mCurrUiThemeMode = uiThemeMode;
+            return;
+        }
+
         // detect theme change.
         CustomTheme newTheme = res.getConfiguration().customTheme;
         if (newTheme != null &&
                 (mCurrentTheme == null || !mCurrentTheme.equals(newTheme))) {
             mCurrentTheme = (CustomTheme)newTheme.clone();
-            recreateStatusBar();
-        } else {
+            return;
+        }
 
-            if (mClearButton instanceof TextView) {
-                ((TextView)mClearButton).setText(context.getText(R.string.status_bar_clear_all_button));
-            }
-            loadDimens();
+        if (mClearButton instanceof TextView) {
+           ((TextView)mClearButton).setText(context.getText(R.string.status_bar_clear_all_button));
         }
 
         // Update the QuickSettings container
         if (mQS != null) mQS.updateResources();
 
+        loadDimens();
     }
 
     protected void loadDimens() {
