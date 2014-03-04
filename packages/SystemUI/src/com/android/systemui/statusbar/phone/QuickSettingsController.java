@@ -32,8 +32,9 @@ import static com.android.internal.util.cm.QSConstants.TILE_MOBILEDATA;
 import static com.android.internal.util.cm.QSConstants.TILE_NETWORKADB;
 import static com.android.internal.util.cm.QSConstants.TILE_NETWORKMODE;
 import static com.android.internal.util.cm.QSConstants.TILE_NFC;
-import static com.android.internal.util.cm.QSConstants.TILE_PROFILE;
 import static com.android.internal.util.cm.QSConstants.TILE_PERFORMANCE_PROFILE;
+import static com.android.internal.util.cm.QSConstants.TILE_POWER;
+import static com.android.internal.util.cm.QSConstants.TILE_PROFILE;
 import static com.android.internal.util.cm.QSConstants.TILE_QUIETHOURS;
 import static com.android.internal.util.cm.QSConstants.TILE_RINGER;
 import static com.android.internal.util.cm.QSConstants.TILE_SCREENTIMEOUT;
@@ -81,6 +82,7 @@ import com.android.systemui.quicksettings.MobileNetworkTypeTile;
 import com.android.systemui.quicksettings.NetworkAdbTile;
 import com.android.systemui.quicksettings.NfcTile;
 import com.android.systemui.quicksettings.PerformanceProfileTile;
+import com.android.systemui.quicksettings.PowerMenuTile;
 import com.android.systemui.quicksettings.PreferencesTile;
 import com.android.systemui.quicksettings.ProfileTile;
 import com.android.systemui.quicksettings.QuickSettingsTile;
@@ -275,6 +277,8 @@ public class QuickSettingsController {
                 if (QSUtils.adbEnabled(resolver)) {
                     qs = new NetworkAdbTile(mContext, this);
                 }
+            } else if (tile.equals(TILE_POWER)) {
+                qs = new PowerMenuTile(mContext, this);
             }
 
             if (qs != null) {
