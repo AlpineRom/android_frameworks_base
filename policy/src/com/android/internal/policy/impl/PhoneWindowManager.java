@@ -526,14 +526,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Increase the chord delay when taking a screenshot from the keyguard
     private static final float KEYGUARD_SCREENSHOT_CHORD_DELAY_MULTIPLIER = 2.5f;
     private boolean mScreenshotChordEnabled;
-    private boolean mScreenRecordChordEnabled = true;
+    private boolean mScreenRecordChordEnabled;
     private boolean mVolumeDownKeyTriggered;
     private long mVolumeDownKeyTime;
     private long mVolumeUpKeyTime;
     private boolean mVolumeDownKeyConsumedByChord;
     private boolean mVolumeUpKeyConsumedByChord;
     private boolean mVolumeUpKeyTriggered;
-    private boolean mVolumeUpKeyConsumedByScreenRecordChord;
     private boolean mPowerKeyTriggered;
     private long mPowerKeyTime;
     private KeyguardManager mKeyguardManager;
@@ -1005,7 +1004,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             final long now = SystemClock.uptimeMillis();
             if (now <= mVolumeUpKeyTime + ACTION_CHORD_DEBOUNCE_DELAY_MILLIS
                     && now <= mPowerKeyTime + ACTION_CHORD_DEBOUNCE_DELAY_MILLIS) {
-                mVolumeUpKeyConsumedByScreenRecordChord = true;
+                mVolumeUpKeyConsumedByChord = true;
                 cancelPendingPowerKeyAction();
 
                 mHandler.postDelayed(mScreenRecordRunnable, getScreenRecordChordLongPressDelay());
@@ -2557,9 +2556,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
             }
             if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
-                    && mVolumeUpKeyConsumedByScreenRecordChord) {
+                    && mVolumeUpKeyConsumedByChord) {
                 if (!down) {
-                    mVolumeUpKeyConsumedByScreenRecordChord = false;
+                    mVolumeUpKeyConsumedByChord = false;
                 }
                 return -1;
             }
@@ -4773,6 +4772,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             mVolumeDownKeyConsumedByChord = false;
                             cancelPendingPowerKeyAction();
                             cancelPendingScreencastChordAction();
+                            cancelPendingScreenRecordChordAction();
                             interceptScreenshotChord();
                             interceptRingerChord();
                         }
@@ -4781,6 +4781,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         cancelPendingScreenshotChordAction();
                         cancelPendingRingerChordAction();
                         cancelPendingScreencastChordAction();
+                        cancelPendingScreenRecordChordAction();
                     }
                 } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
                     if (down) {
@@ -4789,7 +4790,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             mVolumeUpKeyTriggered = true;
                             mVolumeUpKeyTime = event.getDownTime();
                             mVolumeUpKeyConsumedByChord = false;
-                            mVolumeUpKeyConsumedByScreenRecordChord = false;
                             cancelPendingPowerKeyAction();
                             cancelPendingScreenshotChordAction();
                             interceptRingerChord();
@@ -4889,6 +4889,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         mPowerKeyTime = event.getDownTime();
                         cancelPendingRingerChordAction();
                         interceptScreenshotChord();
+                        interceptScreenRecordChord();
                     }
 
                     ITelephony telephonyService = getTelephonyService();
@@ -4915,6 +4916,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 } else {
                     mPowerKeyTriggered = false;
                     cancelPendingScreenshotChordAction();
+                    cancelPendingScreenRecordChordAction();
                     if (interceptPowerKeyUp(canceled || mPendingPowerKeyUpCanceled)) {
                         result = (result & ~ACTION_WAKE_UP) | ACTION_GO_TO_SLEEP;
                     }
