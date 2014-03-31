@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.android.internal.util.cm.QuietHoursUtils;
+
 public class NotificationViewManager {
     private final static String TAG = "Keyguard:NotificationViewManager";
 
@@ -188,7 +190,8 @@ public class NotificationViewManager {
             boolean added = mHostView.addNotification(sbn, (screenOffAndNotCovered || mIsScreenOn) && showNotification,
                     config.forceExpandedView);
             if ( added && config.wakeOnNotification && screenOffAndNotCovered
-                        && showNotification && mTimeCovered == 0) {
+                      && showNotification && mTimeCovered == 0
+                      && !QuietHoursUtils.inQuietHours(mContext, Settings.System.QUIET_HOURS_DIM)) {
                 wakeDevice();
             }
         }
