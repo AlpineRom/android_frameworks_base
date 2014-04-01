@@ -3282,17 +3282,17 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (newTheme != null &&
                 (mCurrentTheme == null || !mCurrentTheme.equals(newTheme))) {
             mCurrentTheme = (CustomTheme)newTheme.clone();
-            return;
+            recreateStatusBar();
         }
 
         if (mClearButton instanceof TextView) {
            ((TextView)mClearButton).setText(context.getText(R.string.status_bar_clear_all_button));
         }
+        loadDimens();
 
         // Update the QuickSettings container
         if (mQS != null) mQS.updateResources();
 
-        loadDimens();
     }
 
     protected void loadDimens() {
