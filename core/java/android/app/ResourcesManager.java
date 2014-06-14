@@ -281,23 +281,40 @@ public class ResourcesManager {
             return;
         }
 
+        final CustomTheme customTheme = r.getConfiguration().customTheme;
+        if (pkgName != null && customTheme != null &&
+                pkgName.equals(customTheme.getIconPackPkgName())) {
+            return;
+        }
+
         //Map application icon
         if (pkgInfo != null && pkgInfo.applicationInfo != null) {
             appInfo = pkgInfo.applicationInfo;
-            if (appInfo.themedIcon != 0) iconResources.put(appInfo.icon, appInfo);
+            if (appInfo.themedIcon != 0 || iconResources.get(appInfo.icon) == null) {
+                iconResources.put(appInfo.icon, appInfo);
+            }
         }
 
         //Map activity icons.
         if (pkgInfo != null && pkgInfo.activities != null) {
             for (ActivityInfo ai : pkgInfo.activities) {
-                if (ai.themedIcon != 0 && ai.icon != 0) {
+                if (ai.icon != 0 && (ai.themedIcon != 0 || iconResources.get(ai.icon) == null)) {
                     iconResources.put(ai.icon, ai);
-                } else if (ai.themedIcon != 0 && appInfo != null && appInfo.icon != 0) {
+                } else if (appInfo != null && appInfo.icon != 0 &&
+                        (ai.themedIcon != 0 || iconResources.get(appInfo.icon) == null)) {
                     iconResources.put(appInfo.icon, ai);
                 }
             }
         }
+
         r.setIconResources(iconResources);
+        final IPackageManager pm = getPackageManager();
+        try {
+            ComposedIconInfo iconInfo = pm.getComposedIconInfo();
+            r.setComposedIconInfo(iconInfo);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     public final int applyConfigurationToResourcesLocked(Configuration config,
@@ -350,6 +367,7 @@ public class ResourcesManager {
                     AssetManager am = r.getAssets();
                     if (am.hasThemeSupport()) {
                         r.setIconResources(null);
+                        r.setComposedIconInfo(null);
                         detachThemeAssets(am);
                         if (config.customTheme != null) {
                             attachThemeAssets(am, config.customTheme);
@@ -419,19 +437,31 @@ public class ResourcesManager {
         // from the res tables. The 0th base package name will be the android group. The
         // 1st base package name will be the app group if one is attached. Check if it is there
         // first or else the system will crash!
-        String packageName = null;
+        String basePackageName = null;
+        String resourcePackageName = null;
         int count = assets.getBasePackageCount();
         if (count > 1) {
-            packageName  = assets.getBasePackageName(1);
+            basePackageName  = assets.getBasePackageName(1);
+            resourcePackageName = assets.getBaseResourcePackageName(1);
         } else if (count == 1) {
-            packageName  = assets.getBasePackageName(0);
+            basePackageName  = assets.getBasePackageName(0);
         } else {
             return false;
         }
 
         try {
-            piTheme = getPackageManager().getPackageInfo(theme.getThemePackageNameForApp(packageName), 0, UserHandle.myUserId());
-            piTarget = getPackageManager().getPackageInfo(packageName, 0, UserHandle.myUserId());
+            piTheme = getPackageManager().getPackageInfo(
+                    theme.getThemePackageNameForApp(basePackageName), 0, UserHandle.myUserId());
+            piTarget = getPackageManager().getPackageInfo(
+                    basePackageName, 0, UserHandle.myUserId());
+
+            // Handle special case where a system app (ex trebuchet) may have had its pkg name
+            // renamed during an upgrade. basePackageName would be the manifest value which will
+            // fail on getPackageInfo(). resource pkg is assumed to have the original name
+            if (piTarget == null && resourcePackageName != null) {
+                piTarget = getPackageManager().getPackageInfo(resourcePackageName,
+                        0, UserHandle.myUserId());
+            }
             piAndroid = getPackageManager().getPackageInfo("android", 0, UserHandle.myUserId());
         } catch (RemoteException e) {
         }
@@ -443,30 +473,34 @@ public class ResourcesManager {
             return false;
         }
 
-        String themePackageName = piTheme.applicationInfo.packageName;
+        String themePackageName = basePackageName;
         String themePath = piTheme.applicationInfo.publicSourceDir;
-
-        if (!piTarget.isThemeApk && piTheme.mOverlayTargets.contains(packageName)) {
+        if (!piTarget.isThemeApk && piTheme.mOverlayTargets.contains(basePackageName)) {
             String targetPackagePath = piTarget.applicationInfo.sourceDir;
-            String prefixPath = piTheme.isLegacyThemeApk ? "" : ThemeUtils.getOverlayPathToTarget(piTarget.packageName);
-            String resCachePath = ThemeUtils.getResDir(piTarget.packageName, piTheme);
+            String prefixPath = piTheme.isLegacyThemeApk ?
+                    "" : ThemeUtils.getOverlayPathToTarget(basePackageName);
+
+            String resCachePath = ThemeUtils.getResDir(basePackageName, piTheme);
             String resTablePath = piTheme.isLegacyThemeApk ? "" : resCachePath + "/resources.arsc";
             String resApkPath = piTheme.isLegacyThemeApk ? "" : resCachePath + "/resources.apk";
-            int cookie = assets.addOverlayPath(themePath, resTablePath, resApkPath, targetPackagePath, prefixPath);
+            int cookie = assets.addOverlayPath(themePath, resTablePath, resApkPath,
+                    targetPackagePath, prefixPath);
 
             if (cookie != 0) {
-                assets.setThemePackageName(themePackageName);
+                assets.setThemePackageName(basePackageName);
                 assets.addThemeCookie(cookie);
             }
         }
 
         if (!piTarget.isThemeApk && piTheme.mOverlayTargets.contains("android")) {
             String resCachePath= ThemeUtils.getResDir(piAndroid.packageName, piTheme);
-            String prefixPath = piTheme.isLegacyThemeApk ? "" : ThemeUtils.getOverlayPathToTarget(piAndroid.packageName);
+            String prefixPath = piTheme.isLegacyThemeApk ?
+                    "" : ThemeUtils.getOverlayPathToTarget(piAndroid.packageName);
             String targetPackagePath = piAndroid.applicationInfo.publicSourceDir;
             String resTablePath = piTheme.isLegacyThemeApk ? "" : resCachePath + "/resources.arsc";
             String resApkPath = piTheme.isLegacyThemeApk ? "" : resCachePath + "/resources.apk";
-            int cookie = assets.addOverlayPath(themePath, resTablePath, resApkPath, targetPackagePath, prefixPath);
+            int cookie = assets.addOverlayPath(themePath, resTablePath,
+                    resApkPath, targetPackagePath, prefixPath);
             if (cookie != 0) {
                 assets.setThemePackageName(themePackageName);
                 assets.addThemeCookie(cookie);
