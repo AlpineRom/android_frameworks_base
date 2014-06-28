@@ -27,6 +27,7 @@ import static com.android.internal.util.cm.QSConstants.TILE_COMPASS;
 import static com.android.internal.util.cm.QSConstants.TILE_DELIMITER;
 import static com.android.internal.util.cm.QSConstants.TILE_EXPANDEDDESKTOP;
 import static com.android.internal.util.cm.QSConstants.TILE_GPS;
+import static com.android.internal.util.cm.QSConstants.TILE_HEADS_UP;
 import static com.android.internal.util.cm.QSConstants.TILE_LOCKSCREEN;
 import static com.android.internal.util.cm.QSConstants.TILE_LTE;
 import static com.android.internal.util.cm.QSConstants.TILE_MOBILEDATA;
@@ -80,6 +81,7 @@ import com.android.systemui.quicksettings.DockBatteryTile;
 import com.android.systemui.quicksettings.EqualizerTile;
 import com.android.systemui.quicksettings.ExpandedDesktopTile;
 import com.android.systemui.quicksettings.GPSTile;
+import com.android.systemui.quicksettings.HeadsUpTile;
 import com.android.systemui.quicksettings.InputMethodTile;
 import com.android.systemui.quicksettings.LteTile;
 import com.android.systemui.quicksettings.MobileNetworkTile;
@@ -215,7 +217,7 @@ public class QuickSettingsController {
         for (String tile : tiles.split("\\|")) {
             QuickSettingsTile qs = null;
             if (tile.equals(TILE_USER)) {
-                qs = new UserTile(mContext, this);
+                qs = new UserTile(mContext, this, mHandler);
             } else if (tile.equals(TILE_BATTERY)) {
                 qs = new BatteryTile(mContext, this, mStatusBarService.mBatteryController);
             } else if (tile.equals(TILE_SETTINGS)) {
@@ -305,6 +307,8 @@ public class QuickSettingsController {
                 qs = new QuickRecordTile(mContext, this);
             } else if (tile.equals(TILE_COMPASS)) {
                 qs = new CompassTile(mContext, this);
+            } else if (tile.equals(TILE_HEADS_UP)) {
+                qs = new HeadsUpTile(mContext, this);
             }
 
             if (qs != null) {
