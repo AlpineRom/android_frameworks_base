@@ -18,6 +18,8 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="accessibility_quick_settings_ringer">Soníu <xliff:g id="state" example="Apagáu">%s</xliff:g>.</string>
   <string name="accessibility_quick_settings_vibration">Vibración <xliff:g id="state" example="Apagada">%s</xliff:g>.</string>
+  <string name="accessibility_dpad_left">Cursor esquierda</string>
+  <string name="accessibility_dpad_right">Cursor derecha</string>
   <string name="dessert_case_settings_cm_title">Amosar mascotes de CM</string>
   <string name="dessert_case_settings_cm_summary">Amosar les mascotes de CyanogenMod xunto a los postres d\'Android</string>
   <string name="quick_settings_profile_label">Perfil</string>
@@ -59,6 +61,8 @@
   <string name="quick_settings_equalizer">Ecualizador</string>
   <string name="quick_settings_compass_off">Brúxula desactivada</string>
   <string name="quick_settings_compass_init">Anicializando\u2026</string>
+  <string name="quick_settings_heads_up_on">Testera habilitada</string>
+  <string name="quick_settings_heads_up_off">Ensin interrupción</string>
   <string name="location_mode_high_accuracy_title">Precisión alta</string>
   <string name="location_mode_battery_saving_title">Aforru de batería</string>
   <string name="location_mode_sensors_only_title">Namái preséu</string>
